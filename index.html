@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>JS动画演示DEMO</title>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="g-doc">
+    <div class="g-hd">
+    </div>
+    <div class="g-bd">
+        <div class="g-mn">
+            <div class="m-slides">
+                <div class="imgwrap f-cb" id="imgwrap">
+                    <div class="banner banner-0" data-index="0"></div>
+                    <div class="banner banner-1" data-index="1"></div>
+                    <div class="banner banner-2" data-index="2"></div>
+                    <div class="banner banner-3" data-index="3"></div>
+                    <div class="banner banner-4" data-index="4"></div>
+                    <div class="banner banner-5" data-index="5"></div>
+                </div>
+            </div>
+            <div class="m-nav">
+                <div class="navswrap f-cb" id="navswrap">
+                    <div class="navwrap navwrap-0" data-index="0">
+                        <div class="nav"></div>
+                        <div class="prcsswrap">
+                            <div class="prcss"></div>
+                        </div>
+                    </div>
+                    <div class="navwrap navwrap-1" data-index="1">
+                        <div class="nav"></div>
+                        <div class="prcsswrap">
+                            <div class="prcss"></div>
+                        </div>
+                    </div>
+                    <div class="navwrap navwrap-2" data-index="2">
+                        <div class="nav"></div>
+                        <div class="prcsswrap">
+                            <div class="prcss"></div>
+                        </div>
+                    </div>
+                    <div class="navwrap navwrap-3" data-index="3">
+                        <div class="nav"></div>
+                        <div class="prcsswrap">
+                            <div class="prcss"></div>
+                        </div>
+                    </div>
+                    <div class="navwrap navwrap-4" data-index="4">
+                        <div class="nav nav-4"></div>
+                        <div class="prcsswrap">
+                            <div class="prcss"></div>
+                        </div>
+                    </div>
+                    <div class="navwrap navwrap-5" data-index="5">
+                        <div class="nav"></div>
+                        <div class="prcsswrap">
+                            <div class="prcss"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+(function () {
+    var SPEED = 500;//图片切换速度
+    var STEP = 10;//图片切换步长（可以简单理解为动画过程中一下走多少）
+    var NUMBER = 6;//图片数量
+    var DURATION = 5000;//单张图片停留时间
+    var INTERVAL = 50;//进度条变化时间间隔
+    var PREV = 0;//上一张图片索引
+    var CURRENT = 0;//当前图片索引
+    var NEXT = CURRENT + 1;//下一张图片的索引
+    var $ = function (id) {
+        return document.getElementById(id);
+    }
+    var getNum = function (str) {
+        if (!str) {
+            return 0;
+        } else {
+            return parseInt(str.split('px')[0]); //获取进度条的宽度值
+        }
+    }
+    //进度条动画
+    //prcsswrap 元素父容器 drtn 进度条的时间 intrvl 触发定时器的时间间隔 callback 回调函数
+    var process = function (prcsswrap, drtn, intrvl, callback) {
+        var width = prcsswrap.clientWidth; //父容器的可视宽度
+        var prcss = prcsswrap.getElementsByClassName('prcss')[0]; //父容器里的子元素（获取当前对象）
+        var count = drtn/intrvl; //触发次数
+        var offset = Math.floor(width/count); //触发一次位移大小（往下取整）
+        var tmpCurrent = CURRENT; //
+        var step = function () {
+            if (tmpCurrent !== CURRENT) {
+                    prcss.style.width = '0px'; //不是当前对象时宽度设为0
+                if(intervalId){
+                    clearInterval(intervalId); //清除计时器
+                }
+                return;
+            }
+            var des = getNum(prcss.style.width) + offset; //获取进度条宽度
+            if (des < width) {//当进度条宽度少于父容器宽度时继续执行加offset直到与父容器宽度相等
+                prcss.style.width = getNum(prcss.style.width) + offset + 'px';
+            } else if (des = width) {  //进度条宽度刚好等于父容器宽度时表示动画已经执行完
+                clearInterval(intervalId); //停止当前进度条动画
+                prcss.style.width = '0px'; //恢复初始宽
+                PREV = CURRENT; //记录此时进度条作为下一个对象的上一个
+                CURRENT = NEXT; //把下一个对象赋为当前对象
+                NEXT++;
+                NEXT = NEXT%NUMBER; //最后一个
+                if (callback)
+                    callback(); //如果需要回调执行回调
+            } else {
+                prcss.style.width = width + 'px'; //进度条宽度加上位移值之后超过父容器宽度就直接把父容器宽度赋给它
+            }
+        }
+        var intervalId = setInterval(step, intrvl); //触发定时器
+    };
+    //位移动画
+    //ele 元素父容器 from 起始 to 结束 callback 回调函数
+    var animation = function (ele, from, to, callback) {
+        var distance = Math.abs(to - from); // 目标和起始位置偏移大小（不管结果是正是负都取绝对值）
+        var cover = 0;
+        var symbol = (to - from)/distance;
+        var stepLength = Math.floor((distance*STEP)/SPEED); //根据位置偏移大小与图片切换步长以及切换速度得出图片切换时走的长度
+        var step = function () {
+            var des = cover + stepLength; 
+            if (des < distance) {
+                cover += stepLength;
+                ele.style.left = getNum(ele.style.left) + stepLength*symbol + 'px';//图片持续偏移
+            } else { //到达目标位置动画完成
+                clearInterval(intervalId);
+                ele.style.left = to + 'px'; //直接把目标位置赋给它
+                if (callback)
+                    callback();
+            }
+        }
+        var intervalId = setInterval(step, STEP);
+    }
+    //与DOM相关的操作要在页面加载完全之后执行
+    window.onload = function () {
+        var imgwrap = $('imgwrap');
+        var imgs = imgwrap.children;
+        var navswrap = $('navswrap');
+        var navs = navswrap.children;
+        //图片轮播动画
+        var slide = function (drtn, intrvl, callback) {
+            var from = -PREV*1224;
+            var to = -CURRENT*1224;
+            animation(imgwrap, from, to, callback);
+        }
+        //切换（进度条动画+位移动画）
+        var goOn = function (drtn, intrvl) {
+            var currentNav = navs[CURRENT];
+            var prcsswrap = currentNav.getElementsByClassName('prcsswrap')[0];
+            process(prcsswrap, drtn, intrvl, function () {
+                slide(drtn, intrvl, function () {
+                    goOn(drtn, intrvl); //循环调用
+                });
+            });
+        }
+        //响应点击
+        $('navswrap').addEventListener('click', (function () {
+            var getElement = function (eve, filter) {
+                var element = eve.target;
+                while (element) {
+                    if (filter(element))
+                        return element;
+                    element = element.parentNode;
+                }
+            }
+            return function (event) {
+                var des = getElement(event, function (ele) {
+                    return (ele.className.indexOf('navwrap') !== -1);
+                })
+                var index = parseInt(des.dataset.index);
+                if(index===CURRENT){
+                    return;
+                }
+                PREV = CURRENT;
+                CURRENT = index;
+                NEXT = (CURRENT+1)%NUMBER;
+                slide(DURATION, INTERVAL, function () {
+                    goOn(DURATION, INTERVAL);
+                });
+            }
+        })());
+        //开始动画
+        goOn(DURATION, INTERVAL);
+    }
+})()
+</script>
+</body>
+</html>
